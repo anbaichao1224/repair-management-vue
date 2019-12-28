@@ -185,7 +185,6 @@
                     data: this.$http.adornData({"id":this.dataForm.id})
                 }).then(({data}) => {
                   if (data && data.code === 0) {
-                    this.dataForm.id = data.task.sysTaskEntity.id
                     this.dataForm.title = data.task.sysTaskEntity.title
                     this.dataForm.position = data.task.sysTaskEntity.position
                     this.dataForm.desc = data.task.sysTaskEntity.desc
@@ -300,7 +299,6 @@
         });
       },
       handlePreview(file) {
-        console.log(file.path)
         this.dialogImageUrl = file.path;
         this.dialogVisible = true;
       },
