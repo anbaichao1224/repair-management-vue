@@ -219,20 +219,16 @@
       },
       // 删除
       deleteHandle (row) {
-        let id = row.id
-        console.log("id"+id)
-        var userIds = id ? [id] : this.dataListSelections.map(item => {
-          return item.userId
-        })
-        this.$confirm(`确定对[id=${userIds.join(',')}]进行[${id ? '删除' : '批量删除'}]操作?`, '提示', {
+        let id = row
+        this.$confirm('删除该条任务, 是否继续?', '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         }).then(() => {
           this.$http({
-            url: this.$http.adornUrl('/sys/user/delete'),
+            url: this.$http.adornUrl(`/sys/task/delete/${id}`),
             method: 'post',
-            data: this.$http.adornData(userIds, false)
+            data: this.$http.adornData()
           }).then(({data}) => {
             if (data && data.code === 0) {
               this.$message({
@@ -247,7 +243,7 @@
               this.$message.error(data.msg)
             }
           })
-        }).catch(() => {})
+        })
       },
       formatter(row, column) {
         return row.address;
