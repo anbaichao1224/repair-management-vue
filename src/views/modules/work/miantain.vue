@@ -103,8 +103,8 @@
           <el-tag v-else-if="scope.row.status === 3" size="small">已处理</el-tag>
         </template>
       </el-table-column>
-
-      <el-table-column prop="pictures" label="描述图片">
+     
+       <el-table-column prop="pictures" label="描述图片">
           <template scope="scope">
             <el-carousel :interval="4000" type="card" height="100px">
               <el-carousel-item v-for="item in scope.row.picEntityList" :key="item.path">
@@ -121,8 +121,8 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button v-if="isAuth('sys:task:update')" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
-          <el-button v-if="isAuth('sys:task:delete')" type="text" size="small" @click="deleteHandle(scope.row.id)">删除</el-button>
+          <el-button v-if="scope.row.status === 2 && scope.row.status === 3" type="text" size="small" @click="showHand(scope.row.id)">查看</el-button>
+          <el-button v-if="scope.row.status === 0 && scope.row.status === 1" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -272,3 +272,20 @@
       }
   }
 </script>
+<style>
+  .el-carousel__item h3 {
+    color: #475669;
+    font-size: 14px;
+    opacity: 0.75;
+    line-height: 200px;
+    margin: 0;
+  }
+  
+  .el-carousel__item:nth-child(2n) {
+    background-color: #99a9bf;
+  }
+  
+  .el-carousel__item:nth-child(2n+1) {
+    background-color: #d3dce6;
+  }
+</style>

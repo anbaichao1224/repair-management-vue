@@ -29,12 +29,6 @@
       </el-form-item>
 
       <el-form-item label="图片" prop="picList">
-         <!-- <span v-for="item in dataForm.picList">
-              <el-popover placement="left" title="" trigger="hover" width="500">
-                <img :src="item.path" width="100%" />
-                <img slot="reference" :src="item.path" :alt="item.path" style="height: 150px;width: 150px; padding: 3px">
-              </el-popover>
-          </span> -->
         <el-upload
           class="upload-demo"
           :action="url"
@@ -42,7 +36,6 @@
           :multiple="true"
           accept="image/jpeg,image/jpg,image/png"
           :on-preview="handlePreview"
-          :on-change="handleChange"
           :on-remove="handleRemove"
           :before-upload="beforeUploadHandle"
           :on-success="successHandle"
@@ -108,6 +101,13 @@
 
   export default {
     data () {
+      var validateMobile = (rule, value, callback) => {
+        if (!isMobile(value)) {
+          callback(new Error('手机号格式错误'))
+        } else {
+          callback()
+        }
+      }
       return {
         url: '',
         visible: false,
@@ -130,7 +130,7 @@
           types: null,
           assigner: ''
         },
-        picList: [],
+        savePicList: [],
         pList: [],
         orgList: [],
         orgListTreeProps: {
@@ -155,7 +155,7 @@
           picList: []
         },
         dataRule: {
-         
+      
         }
       }
     },
@@ -185,7 +185,6 @@
                     data: this.$http.adornData({"id":this.dataForm.id})
                 }).then(({data}) => {
                   if (data && data.code === 0) {
-                    this.dataForm.id = data.task.sysTaskEntity.id
                     this.dataForm.title = data.task.sysTaskEntity.title
                     this.dataForm.position = data.task.sysTaskEntity.position
                     this.dataForm.desc = data.task.sysTaskEntity.desc
@@ -198,13 +197,14 @@
                     this.dataForm.status = data.task.sysTaskEntity.status 
                     this.dataForm.types = data.task.sysTaskEntity.types
                     this.dataForm.orgname = data.task.sysTaskEntity.orgname
+                    this.savePicList = data.task.picList
+
+                    this.menuListTreeSetCurrentNode()
                     let arr = [];
                     data.task.picList.forEach(element => {
                         arr.push({"name":element.id,"url":element.path})
                     });
                    this.dataForm.picList = arr
-
-                    this.menuListTreeSetCurrentNode()
                   }
                 })
             }else{
@@ -217,6 +217,7 @@
       dataFormSubmit () {
        // this.$refs['dataForm'].validate((valid) => {
          // if (valid) {
+            let arrs = []
             this.addData.sysTaskEntity = {
                 'id': this.dataForm.id || undefined,
                 'types':this.dataForm.types,
@@ -224,16 +225,15 @@
                 'position': this.dataForm.position,
                 'desc': this.dataForm.desc,
                 'taskdate': this.dataForm.taskdate,
-                'creuser': this.userid,
+                'creuser': this.dataForm.creuser,
                 'assigner': this.dataForm.assigner,
                 'cremobile': this.dataForm.cremobile,
-                'creuserid': this.userid,
+                'creuserid': this.userId,
                 'status': this.dataForm.status
             },
-            
-            this.addData.picList=this.pList
-           // this.addData.picList= this.picList
-            
+           
+            this.addData.picList= this.savePicList
+
             if (!this.addData.sysTaskEntity.title) {
                   this.$message.error('请填写标题')
                   return
@@ -257,9 +257,14 @@
             if (!this.addData.sysTaskEntity.cremobile) {
                   this.$message.error('请填写联系电话')
                   return
+            }else {
+                 var myreg=/^[1][3,4,5,7,8][0-9]{9}$/;
+                if (!myreg.test(this.addData.sysTaskEntity.cremobile)) {
+                    this.$message.error('请正确的联系电话')
+                    return 
+                }
             }
 
-            console.log(this.addData)
             this.$http({
               url: this.$http.adornUrl(`/sys/task/${!this.dataForm.id ? 'saveTask' : 'updateTask'}`),
               method: 'post',
@@ -292,7 +297,13 @@
         this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['showname']
       },//上传图片涉及到的方法
       handleRemove(file, picList) {
-        this.picList=this.dataForm.picList;
+        let arrs = []
+         picList.forEach(element=>{
+                arrs.push({
+                    "path": element.url
+                })
+            })
+         this.savePicList = arrs
         this.$message({
           type: 'info',
           message: '已删除原有图片',
@@ -300,13 +311,19 @@
         });
       },
       handlePreview(file) {
-        console.log(file.path)
-        this.dialogImageUrl = file.path;
+        this.dialogImageUrl = file.url;
         this.dialogVisible = true;
       },
-      handleChange(file,picList){
-        this.picList=picList;
-      }, // 上传之前
+       handleChange(file,picList){
+         console.log("change"+JSON.stringify(picList))
+         let arrs = []
+         this.picList.forEach(element=>{
+                arrs.push({
+                    "path": element.url
+                })
+            })
+         this.savePicList = arrs
+       },// 上传之前
       beforeUploadHandle (file) {
         if (file.type !== 'image/jpg' && file.type !== 'image/jpeg' && file.type !== 'image/png' && file.type !== 'image/gif') {
           this.$message.error('只支持jpg、png、gif格式的图片！')
@@ -316,13 +333,13 @@
       },
       // 上传成功
       successHandle (response, file, picList) {
-        this.picList = picList
+        this.pList = picList
         this.successNum++
         if (response && response.code === 0) {
            let picss ={
              path:response.url
            }
-           this.pList.push(picss)
+           this.savePicList.push(picss)
         } else {
           this.$message.error(response.msg)
         }
