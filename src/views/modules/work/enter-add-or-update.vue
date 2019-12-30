@@ -29,14 +29,6 @@
       </el-form-item>
 
       <el-form-item label="图片" prop="picList">
-         <!-- <span v-for="item in dataForm.picList">
-              <el-popover placement="left" title="" trigger="hover" width="500">
-                <img :src="item.path" width="100%" />
-                <img slot="reference" :src="item.path" :alt="item.path" style="height: 150px;width: 150px; padding: 3px">
-              </el-popover>
-          </span> 
-          :on-change="handleChange"
-          -->
         <el-upload
           class="upload-demo"
           :action="url"
@@ -207,13 +199,12 @@
                     this.dataForm.orgname = data.task.sysTaskEntity.orgname
                     this.savePicList = data.task.picList
 
+                    this.menuListTreeSetCurrentNode()
                     let arr = [];
                     data.task.picList.forEach(element => {
                         arr.push({"name":element.id,"url":element.path})
                     });
                    this.dataForm.picList = arr
-
-                    this.menuListTreeSetCurrentNode()
                   }
                 })
             }else{
@@ -320,7 +311,7 @@
         });
       },
       handlePreview(file) {
-        this.dialogImageUrl = file.path;
+        this.dialogImageUrl = file.url;
         this.dialogVisible = true;
       },
        handleChange(file,picList){
