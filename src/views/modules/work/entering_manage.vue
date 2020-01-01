@@ -104,11 +104,17 @@
         </template>
       </el-table-column>
 
-      <el-table-column prop="pictures" label="描述图片">
-          <template scope="scope">
+      <el-table-column prop="pictures" label="描述图片"
+          header-align="center"
+          align="center"
+          width="200px">
+          <template slot-scope="scope">
             <el-carousel :interval="4000" type="card" height="100px">
               <el-carousel-item v-for="item in scope.row.picEntityList" :key="item.path">
-                <img style="width: 100px; height: 100px" :src="item.path"/>
+                <el-popover placement="right" title="" trigger="hover">
+                <img style="width: 200px; height: 200px" :src="item.path"/>
+                <img  slot="reference" :src="item.path" :alt="item.path" style="max-height: 100px;max-width: 100px">
+               </el-popover>
               </el-carousel-item>
             </el-carousel>
           </template>
@@ -121,8 +127,8 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button v-if="isAuth('sys:task:update')" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
-          <el-button v-if="isAuth('sys:task:delete')" type="text" size="small" @click="deleteHandle(scope.row.id)">删除</el-button>
+          <el-button v-if="scope.row.status == 0" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
+          <el-button v-if="scope.row.status == 0" type="text" size="small" @click="deleteHandle(scope.row.id)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -165,11 +171,19 @@
           value: '',
           label: '全部'
         }, {
+          value: '0',
+          label: '待分配'
+        },
+        {
           value: '1',
+          label: '以分配'
+        },
+        {
+          value: '2',
           label: '待处理'
-        }, {
+        },{
           value: '3',
-          label: '已完成'
+          label: '以处理'
         }]
       }
     },
@@ -192,7 +206,7 @@
             'title': this.dataForm.title,
             'startdate': this.dataForm.startdate,
             'enddate' : this.dataForm.enddate,
-            'status' : this.dataForm.startdate
+            'status' : this.dataForm.status
           })
         }).then(({data}) => {
           console.log(data)

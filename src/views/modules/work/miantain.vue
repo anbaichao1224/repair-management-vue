@@ -19,7 +19,6 @@
       </el-form-item>
       <el-form-item>
         <el-button @click="getDataList()">查询</el-button>
-        <el-button v-if="isAuth('sys:user:save')" type="primary" @click="addOrUpdateHandle()">新增</el-button>
       </el-form-item>
     </el-form>
     <el-table
@@ -104,15 +103,35 @@
         </template>
       </el-table-column>
      
-       <el-table-column prop="pictures" label="描述图片">
-          <template scope="scope">
+      <el-table-column prop="pictures" label="描述图片"
+          header-align="center"
+          align="center"
+          width="200px">
+          <template slot-scope="scope">
             <el-carousel :interval="4000" type="card" height="100px">
               <el-carousel-item v-for="item in scope.row.picEntityList" :key="item.path">
-                <img style="width: 100px; height: 100px" :src="item.path"/>
+                <el-popover placement="right" title="" trigger="hover">
+                <img style="width: 200px; height: 200px" :src="item.path"/>
+                <img  slot="reference" :src="item.path" :alt="item.path" style="max-height: 100px;max-width: 100px">
+               </el-popover>
               </el-carousel-item>
             </el-carousel>
           </template>
       </el-table-column>
+
+      <!-- <el-table-column
+          prop="picture"
+          header-align="center"
+          align="center"
+          width="150px"
+          label="图片">
+          <template slot-scope="scope">
+          <el-popover placement="right" title="" trigger="hover">
+            <img  v-for="item in scope.row.picEntityList" :src="item.path"/>
+            <img  slot="reference" :src="item.path" :alt="item.path" style="max-height: 50px;max-width: 130px">
+          </el-popover>
+          </template>
+        </el-table-column> -->
 
       <el-table-column
         fixed="right"
@@ -121,8 +140,8 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button v-if="scope.row.status === 2 && scope.row.status === 3" type="text" size="small" @click="showHand(scope.row.id)">查看</el-button>
-          <el-button v-if="scope.row.status === 0 && scope.row.status === 1" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">修改</el-button>
+          <el-button type="text" size="small" @click="showHand(scope.row.id)">查看</el-button>
+          <el-button v-if="scope.row.status === 0 && scope.row.status === 1" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">分配</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -141,7 +160,7 @@
 </template>
 
 <script>
-  import AddOrUpdate from './enter-add-or-update'
+  import AddOrUpdate from './miantain-add-or-update'
   import { treeDataTranslate1 } from '@/utils'
 
   export default {
@@ -165,11 +184,19 @@
           value: '',
           label: '全部'
         }, {
+          value: '0',
+          label: '待分配'
+        },
+        {
           value: '1',
+          label: '以分配'
+        },
+        {
+          value: '2',
           label: '待处理'
-        }, {
+        },{
           value: '3',
-          label: '已完成'
+          label: '以处理'
         }]
       }
     },
@@ -192,7 +219,7 @@
             'title': this.dataForm.title,
             'startdate': this.dataForm.startdate,
             'enddate' : this.dataForm.enddate,
-            'status' : this.dataForm.startdate
+            'status' : this.dataForm.status
           })
         }).then(({data}) => {
           console.log(data)
@@ -223,6 +250,13 @@
       },
       // 新增 / 修改
       addOrUpdateHandle (id) {
+        this.addOrUpdateVisible = true
+        this.$nextTick(() => {
+          this.$refs.addOrUpdate.init(id)
+        })
+      },
+      // 新增 / 修改
+      showHand (id) {
         this.addOrUpdateVisible = true
         this.$nextTick(() => {
           this.$refs.addOrUpdate.init(id)
