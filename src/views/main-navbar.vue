@@ -2,7 +2,7 @@
   <nav class="site-navbar" :class="'site-navbar--' + navbarLayoutType">
     <div class="site-navbar__header">
       <h1 class="site-navbar__brand" @click="$router.push({ name: 'home' })">
-        <a class="site-navbar__brand-lg" href="javascript:;">移动办公管理后台</a>
+        <a class="site-navbar__brand-lg" href="javascript:;">物业移动办公平台</a>
         <a class="site-navbar__brand-mini" href="javascript:;">政法大学学院路物业</a>
       </h1>
     </div>
