@@ -141,7 +141,7 @@
         label="操作">
         <template slot-scope="scope">
           <el-button type="text" size="small" @click="showHand(scope.row.id)">查看</el-button>
-          <el-button v-if="scope.row.status === 0 && scope.row.status === 1" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">分配</el-button>
+          <el-button v-if="scope.row.status === 0 || scope.row.status === 1" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">分配</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -156,11 +156,13 @@
     </el-pagination>
     <!-- 弹窗, 新增 / 修改 -->
     <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" @refreshDataList="getDataList"></add-or-update>
+    <add-or-update v-if="showMiantainVisible" ref="showMiantain" @refreshDataList="getDataList"></add-or-update>
   </div>
 </template>
 
 <script>
   import AddOrUpdate from './miantain-add-or-update'
+  import ShowMiantain from './miantain-show'
   import { treeDataTranslate1 } from '@/utils'
 
   export default {
@@ -179,6 +181,7 @@
         dataListLoading: false,
         dataListSelections: [],
         addOrUpdateVisible: false,
+        showMiantainVisible: false,
         setime: [],
         options: [{
           value: '',
@@ -201,7 +204,8 @@
       }
     },
     components: {
-      AddOrUpdate
+      AddOrUpdate,
+      ShowMiantain
     },
     activated () {
       this.getDataList()
@@ -257,9 +261,9 @@
       },
       // 新增 / 修改
       showHand (id) {
-        this.addOrUpdateVisible = true
+        this.showMiantainVisible = true
         this.$nextTick(() => {
-          this.$refs.addOrUpdate.init(id)
+          this.$refs.showMiantain.inits(id)
         })
       },
       // 删除

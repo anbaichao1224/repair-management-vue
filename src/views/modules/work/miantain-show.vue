@@ -6,7 +6,7 @@
     <el-form :model="dataForm" :rules="dataRule"  ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="100px" label-position="right"> 
 
       <el-form-item label="标题" prop="title" >
-        <el-input v-model="dataForm.title" disabled placeholder="输入标题" disabled ></el-input>
+        <el-input v-model="dataForm.title" disabled placeholder="输入标题"></el-input>
       </el-form-item>
 
       <el-form-item label="日期" prop="taskdate">
@@ -14,17 +14,15 @@
           v-model="dataForm.taskdate"
           type="date"
           value-format="yyyy-MM-dd HH:mm:ss"
-          placeholder="选择日期"
-          disabled
-          >
+          placeholder="选择日期">
         </el-date-picker>
       </el-form-item>
       <el-form-item label="位置" prop="position">
-        <el-input v-model="dataForm.position" placeholder="输入位置" disabled></el-input>
+        <el-input v-model="dataForm.position" placeholder="输入位置"></el-input>
       </el-form-item>
 
      <el-form-item label="报修分类" prop="types">
-        <el-select v-model="dataForm.types" placeholder="请选择" disabled>
+        <el-select v-model="dataForm.types" placeholder="请选择">
           <el-option v-for="item in options" :key="item.value"  :label="item.label" :value="item.value">
           </el-option>
         </el-select>
@@ -33,10 +31,14 @@
       <el-form-item label="图片" prop="picList">
         <el-upload
           class="upload-demo"
+          :action="url"
           ref="upload"
           :multiple="true"
           accept="image/jpeg,image/jpg,image/png"
           :on-preview="handlePreview"
+          :on-remove="handleRemove"
+          :before-upload="beforeUploadHandle"
+          :on-success="successHandle"
           :file-list="dataForm.picList"
           list-type="picture-card">
           <i class="el-icon-plus" ></i>
@@ -48,7 +50,6 @@
 
       <el-form-item label="描述:" prop="desc">
         <el-input
-          disabled
           type="textarea"
           :rows="3"
           placeholder="请输入描述内容"
@@ -77,16 +78,15 @@
       </el-form-item>
 
       <el-form-item label="上报人" prop="creuser">
-        <el-input v-model="dataForm.creuser" placeholder="" disabled></el-input>
+        <el-input v-model="dataForm.creuser" placeholder=""></el-input>
       </el-form-item>
 
       <el-form-item label="上报人电话" prop="cremobile">
-        <el-input v-model="dataForm.cremobile" placeholder="" disabled></el-input>
+        <el-input v-model="dataForm.cremobile" placeholder=""></el-input>
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" @click="dataFormSubmit()">确定</el-button>
+      <el-button @click="visible = false">关闭</el-button>
     </span>
   </el-dialog>
 
@@ -159,7 +159,7 @@
       }
     },
     methods: {
-      init (id) {
+      inits (id) {
         this.url = this.$http.adornUrl('/sys/task/upload')
         this.dataForm.id = id || 0
         this.$http({
@@ -216,23 +216,58 @@
       dataFormSubmit () {
        // this.$refs['dataForm'].validate((valid) => {
          // if (valid) {
-            
-            if (!this.dataForm.assigner) {
+            let arrs = []
+            this.addData.sysTaskEntity = {
+                'id': this.dataForm.id || undefined,
+                'types':this.dataForm.types,
+                'title': this.dataForm.title,
+                'position': this.dataForm.position,
+                'desc': this.dataForm.desc,
+                'taskdate': this.dataForm.taskdate,
+                'creuser': this.dataForm.creuser,
+                'assigner': this.dataForm.assigner,
+                'cremobile': this.dataForm.cremobile,
+                'creuserid': this.userId,
+                'status': this.dataForm.status
+            },
+           
+            this.addData.picList= this.savePicList
+
+            if (!this.addData.sysTaskEntity.title) {
+                  this.$message.error('请填写标题')
+                  return
+            }
+            if (!this.addData.sysTaskEntity.types) {
+                    this.$message.error('请选择维修类型')
+                    return
+              }
+            if (!this.addData.sysTaskEntity.position) {
+                  this.$message.error('请选择位置')
+                  return
+            }
+            if (!this.addData.sysTaskEntity.taskdate) {
+                  this.$message.error('请选择时间')
+                  return
+            }
+            if (!this.addData.sysTaskEntity.assigner) {
                   this.$message.error('请选择维修人')
                   return
             }
-
-            let params = {
-                "updateuser": this.userId,
-                "id": this.dataForm.id,
-                "assigner": this.dataForm.assigner,
-                "status": "2"
+            if (!this.addData.sysTaskEntity.cremobile) {
+                  this.$message.error('请填写联系电话')
+                  return
+            }else {
+                 var myreg=/^[1][3,4,5,7,8][0-9]{9}$/;
+                if (!myreg.test(this.addData.sysTaskEntity.cremobile)) {
+                    this.$message.error('请正确的联系电话')
+                    return 
+                }
             }
 
             this.$http({
-              url: this.$http.adornUrl(`/sys/task/updateAssigner`),
+              url: this.$http.adornUrl(`/sys/task/${!this.dataForm.id ? 'saveTask' : 'updateTask'}`),
               method: 'post',
-              data: this.$http.adornData(params)
+              data: this.$http.adornData(this.addData)
             }).then(({data}) => {
               if (data && data.code === 0) {
                 this.$message({
@@ -251,18 +286,62 @@
       },
       // 菜单树选中
       menuListTreeCurrentChangeHandle (data, node) {
-        console.log(JSON.stringify(data))
+        console.log(data.userid)
         this.dataForm.assigner = data.userid
-        this.dataForm.orgname = data.name
+        this.dataForm.orgname = data.showname
       },
       // 菜单树设置当前选中节点
       menuListTreeSetCurrentNode () {
         this.$refs.menuListTree.setCurrentKey(this.dataForm.assigner)
-        this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['name']
+        this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['showname']
+      },//上传图片涉及到的方法
+      handleRemove(file, picList) {
+        let arrs = []
+         picList.forEach(element=>{
+                arrs.push({
+                    "path": element.url
+                })
+            })
+         this.savePicList = arrs
+        this.$message({
+          type: 'info',
+          message: '已删除原有图片',
+          duration: 1000
+        });
       },
       handlePreview(file) {
         this.dialogImageUrl = file.url;
         this.dialogVisible = true;
+      },
+       handleChange(file,picList){
+         console.log("change"+JSON.stringify(picList))
+         let arrs = []
+         this.picList.forEach(element=>{
+                arrs.push({
+                    "path": element.url
+                })
+            })
+         this.savePicList = arrs
+       },// 上传之前
+      beforeUploadHandle (file) {
+        if (file.type !== 'image/jpg' && file.type !== 'image/jpeg' && file.type !== 'image/png' && file.type !== 'image/gif') {
+          this.$message.error('只支持jpg、png、gif格式的图片！')
+          return false
+        }
+        this.num++
+      },
+      // 上传成功
+      successHandle (response, file, picList) {
+        this.pList = picList
+        this.successNum++
+        if (response && response.code === 0) {
+           let picss ={
+             path:response.url
+           }
+           this.savePicList.push(picss)
+        } else {
+          this.$message.error(response.msg)
+        }
       }
   },computed: {
           documentClientHeight: {
