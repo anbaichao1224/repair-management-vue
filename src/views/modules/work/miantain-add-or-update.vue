@@ -3,10 +3,10 @@
     :title="!dataForm.id ? '新增' : '修改'"
     :close-on-click-modal="false"
     :visible.sync="visible" top="5vh">
-    <el-form :model="dataForm" :rules="dataRule"  ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="100px" label-position="right"> 
+    <el-form :model="dataForm" v-if="showtype=='add'" :rules="dataRule"  ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="100px" label-position="right"> 
 
       <el-form-item label="标题" prop="title" >
-        <el-input v-model="dataForm.title" disabled placeholder="输入标题" disabled ></el-input>
+        <el-input v-model="dataForm.title" disabled placeholder="输入标题" ></el-input>
       </el-form-item>
 
       <el-form-item label="日期" prop="taskdate">
@@ -56,8 +56,8 @@
         </el-input>
       </el-form-item>
 
-    
-      <el-form-item label="处理人" prop="orgname">
+
+     <el-form-item label="处理人" prop="orgname">
         <el-popover
           ref="menuListPopover"
           placement="bottom-start"
@@ -74,7 +74,7 @@
           </el-tree>
         </el-popover>
         <el-input v-model="dataForm.orgname" v-popover:menuListPopover :readonly="true" placeholder="点击选择处理人" class="menu-list__input"></el-input>
-      </el-form-item>
+      </el-form-item> 
 
       <el-form-item label="上报人" prop="creuser">
         <el-input v-model="dataForm.creuser" placeholder="" disabled></el-input>
@@ -84,9 +84,97 @@
         <el-input v-model="dataForm.cremobile" placeholder="" disabled></el-input>
       </el-form-item>
     </el-form>
+
+
+    <el-form :model="dataForm" v-if="showtype=='look'" :rules="dataRule"  ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="100px" label-position="right"> 
+
+      <el-form-item label="标题" prop="title" >
+        <el-input v-model="dataForm.title" disabled placeholder="输入标题" ></el-input>
+      </el-form-item>
+
+      <el-form-item label="日期" prop="taskdate">
+        <el-date-picker
+          v-model="dataForm.taskdate"
+          type="date"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          placeholder="选择日期"
+          disabled
+          >
+        </el-date-picker>
+      </el-form-item>
+      <el-form-item label="位置" prop="position">
+        <el-input v-model="dataForm.position" placeholder="输入位置" disabled></el-input>
+      </el-form-item>
+
+     <el-form-item label="报修分类" prop="types">
+        <el-select v-model="dataForm.types" placeholder="请选择" disabled>
+          <el-option v-for="item in options" :key="item.value"  :label="item.label" :value="item.value">
+          </el-option>
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="图片" prop="picList">
+        <el-upload
+          class="upload-demo"
+          ref="upload"
+          :multiple="true"
+          accept="image/jpeg,image/jpg,image/png"
+          :on-preview="handlePreview"
+          :file-list="dataForm.picList"
+          list-type="picture-card">
+          <i class="el-icon-plus" ></i>
+        </el-upload>
+        <el-dialog :visible.sync="dialogVisible" top="10vh" append-to-body="">
+          <img width="80%" :src="dialogImageUrl" alt="">
+        </el-dialog>
+      </el-form-item>
+
+      <el-form-item label="描述:" prop="desc">
+        <el-input
+          disabled
+          type="textarea"
+          :rows="3"
+          placeholder="请输入描述内容"
+          v-model="dataForm.desc">
+        </el-input>
+      </el-form-item>
+
+
+      <el-form-item label="处理人" prop="assigner">
+        
+      </el-form-item>
+      <!-- <el-form-item label="处理人" prop="orgname">
+        <el-popover
+          ref="menuListPopover"
+          placement="bottom-start"
+          trigger="click">
+          <el-tree
+            :data="orgList"
+            :props="orgListTreeProps"
+            node-key="userid"
+            ref="menuListTree"
+            @current-change="menuListTreeCurrentChangeHandle"
+            :default-expand-all="true"
+            :highlight-current="true"
+            :expand-on-click-node="false">
+          </el-tree>
+        </el-popover>
+        <el-input v-model="dataForm.orgname" v-popover:menuListPopover :readonly="true" placeholder="点击选择处理人" class="menu-list__input"></el-input>
+      </el-form-item> -->
+
+      <el-form-item label="上报人" prop="creuser">
+        <el-input v-model="dataForm.creuser" placeholder="" disabled></el-input>
+      </el-form-item>
+
+      <el-form-item label="上报人电话" prop="cremobile">
+        <el-input v-model="dataForm.cremobile" placeholder="" disabled></el-input>
+      </el-form-item>
+    </el-form>
+
+
     <span slot="footer" class="dialog-footer">
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" @click="dataFormSubmit()">确定</el-button>
+      <el-button @click="visible = false">关闭</el-button>
+      <el-button type="primary" v-if="showtype=='add'" @click="dataFormSubmit()">确定</el-button>
     </span>
   </el-dialog>
 
@@ -158,6 +246,9 @@
         }
       }
     },
+    props:[
+      'showtype'
+    ],
     methods: {
       init (id) {
         this.url = this.$http.adornUrl('/sys/task/upload')
@@ -171,7 +262,6 @@
             }).then(() => {
                 this.visible = true
                 this.$nextTick(() => {
-                this.$refs['dataForm'].resetFields()
                   if (this.dataForm.id) {
                     this.menuListTreeSetCurrentNode()
                   }
@@ -197,9 +287,8 @@
                     this.dataForm.types = data.task.sysTaskEntity.types
                     this.dataForm.orgname = data.task.sysTaskEntity.orgname
                     this.savePicList = data.task.picList
-
                     this.menuListTreeSetCurrentNode()
-                    let arr = [];
+                    let arr = []
                     data.task.picList.forEach(element => {
                         arr.push({"name":element.id,"url":element.path})
                     });
@@ -214,21 +303,16 @@
       },
       // 表单提交
       dataFormSubmit () {
-       // this.$refs['dataForm'].validate((valid) => {
-         // if (valid) {
-            
             if (!this.dataForm.assigner) {
                   this.$message.error('请选择维修人')
                   return
             }
-
             let params = {
                 "updateuser": this.userId,
                 "id": this.dataForm.id,
                 "assigner": this.dataForm.assigner,
                 "status": "2"
             }
-
             this.$http({
               url: this.$http.adornUrl(`/sys/task/updateAssigner`),
               method: 'post',
@@ -251,11 +335,10 @@
       },
       // 菜单树选中
       menuListTreeCurrentChangeHandle (data, node) {
-        console.log(JSON.stringify(data))
         this.dataForm.assigner = data.userid
         this.dataForm.orgname = data.name
       },
-      // 菜单树设置当前选中节点
+      //菜单树设置当前选中节点
       menuListTreeSetCurrentNode () {
         this.$refs.menuListTree.setCurrentKey(this.dataForm.assigner)
         this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['name']

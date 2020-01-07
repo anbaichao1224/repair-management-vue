@@ -26,7 +26,6 @@
       border
       :default-sort = "{prop: 'data', order: 'descending'}"
       v-loading="dataListLoading"
-      @selection-change="selectionChangeHandle"
       style="width: 100%;">
       <el-table-column
         type="index"
@@ -119,19 +118,6 @@
           </template>
       </el-table-column>
 
-      <!-- <el-table-column
-          prop="picture"
-          header-align="center"
-          align="center"
-          width="150px"
-          label="图片">
-          <template slot-scope="scope">
-          <el-popover placement="right" title="" trigger="hover">
-            <img  v-for="item in scope.row.picEntityList" :src="item.path"/>
-            <img  slot="reference" :src="item.path" :alt="item.path" style="max-height: 50px;max-width: 130px">
-          </el-popover>
-          </template>
-        </el-table-column> -->
 
       <el-table-column
         fixed="right"
@@ -140,8 +126,8 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button type="text" size="small" @click="showHand(scope.row.id)">查看</el-button>
-          <el-button v-if="scope.row.status === 0 || scope.row.status === 1" type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">分配</el-button>
+          <el-button type="text" size="small"  @click="look(scope.row.id)">查看</el-button>
+          <el-button v-if="scope.row.status === 0 || scope.row.status === 1"  type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">分配</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -155,14 +141,12 @@
       layout="total, sizes, prev, pager, next, jumper">
     </el-pagination>
     <!-- 弹窗, 新增 / 修改 -->
-    <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" @refreshDataList="getDataList"></add-or-update>
-    <add-or-update v-if="showMiantainVisible" ref="showMiantain" @refreshDataList="getDataList"></add-or-update>
+    <add-or-update v-if="addOrUpdateVisible" ref="addOrUpdate" :showtype="showtype"  @refreshDataList="getDataList"></add-or-update>
   </div>
 </template>
 
 <script>
   import AddOrUpdate from './miantain-add-or-update'
-  import ShowMiantain from './miantain-show'
   import { treeDataTranslate1 } from '@/utils'
 
   export default {
@@ -174,6 +158,7 @@
           startdate : '',
           enddate : ''
         },
+        showtype: '',
         dataList: [],
         pageIndex: 1,
         pageSize: 10,
@@ -204,8 +189,7 @@
       }
     },
     components: {
-      AddOrUpdate,
-      ShowMiantain
+      AddOrUpdate
     },
     activated () {
       this.getDataList()
@@ -226,7 +210,6 @@
             'status' : this.dataForm.status
           })
         }).then(({data}) => {
-          console.log(data)
           if (data && data.code === 0) {
             this.dataList = data.page.records
             this.totalPage = data.page.total
@@ -248,22 +231,20 @@
         this.pageIndex = val
         this.getDataList()
       },
-      // 多选
-      selectionChangeHandle (val) {
-        this.dataListSelections = val
-      },
       // 新增 / 修改
       addOrUpdateHandle (id) {
+        this.showtype = 'add'
         this.addOrUpdateVisible = true
         this.$nextTick(() => {
           this.$refs.addOrUpdate.init(id)
         })
       },
       // 新增 / 修改
-      showHand (id) {
-        this.showMiantainVisible = true
+      look (id) {
+        this.showtype= 'look'
+        this.addOrUpdateVisible = true
         this.$nextTick(() => {
-          this.$refs.showMiantain.inits(id)
+          this.$refs.addOrUpdate.init(id)
         })
       },
       // 删除

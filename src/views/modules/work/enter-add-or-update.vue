@@ -290,10 +290,12 @@
         console.log(data.userid)
         this.dataForm.assigner = data.userid
         this.dataForm.orgname = data.showname
+        this.dataForm.org = data.id
       },
       // 菜单树设置当前选中节点
       menuListTreeSetCurrentNode () {
         this.$refs.menuListTree.setCurrentKey(this.dataForm.assigner)
+        this.dataForm.org = this.dataForm.org
         this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['showname']
       },//上传图片涉及到的方法
       handleRemove(file, picList) {
