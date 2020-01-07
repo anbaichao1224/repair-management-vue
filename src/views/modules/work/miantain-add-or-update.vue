@@ -31,19 +31,14 @@
       </el-form-item>
 
       <el-form-item label="图片" prop="picList">
-        <el-upload
-          class="upload-demo"
-          ref="upload"
-          :multiple="true"
-          accept="image/jpeg,image/jpg,image/png"
-          :on-preview="handlePreview"
-          :file-list="dataForm.picList"
-          list-type="picture-card">
-          <i class="el-icon-plus" ></i>
-        </el-upload>
-        <el-dialog :visible.sync="dialogVisible" top="10vh" append-to-body="">
-          <img width="80%" :src="dialogImageUrl" alt="">
-        </el-dialog>
+              <el-carousel indicator-position="outside" height="350px"> 
+              <el-carousel-item v-for="item in dataForm.picList" :key="item.id">
+                <el-popover placement="right" title="" trigger="hover">
+                <img  :src="item.url"/>
+                <img  slot="reference" :src="item.url" :alt="item.url">
+               </el-popover>
+              </el-carousel-item>  
+            </el-carousel>
       </el-form-item>
 
       <el-form-item label="描述:" prop="desc">
@@ -85,6 +80,7 @@
       </el-form-item>
     </el-form>
 
+    <!----   查看   ----->
 
     <el-form :model="dataForm" v-if="showtype=='look'" :rules="dataRule"  ref="dataForm" @keyup.enter.native="dataFormSubmit()" label-width="100px" label-position="right"> 
 
@@ -344,7 +340,7 @@
         this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['name']
       },
       handlePreview(file) {
-        this.dialogImageUrl = file.url;
+        this.dialogImageUrl = file.path;
         this.dialogVisible = true;
       }
   },computed: {
@@ -382,3 +378,14 @@
       }
   }
 </script>
+<style>
+ .carousel_image_type1{
+     width: 100%;
+     height: 100%;
+  }
+
+  .carousel_image_type{
+     width: 50%;
+     height: 50%;
+  }
+</style>
