@@ -34,8 +34,8 @@
               <el-carousel indicator-position="outside" height="350px"> 
               <el-carousel-item v-for="item in dataForm.picList" :key="item.id">
                 <el-popover placement="right" title="" trigger="hover">
-                <img  :src="item.url"/>
-                <img  slot="reference" :src="item.url" :alt="item.url">
+                <img  :src="item.url" style="height:50%;width:350px"/>
+                <img  slot="reference" :src="item.url" :alt="item.url"  style="height:100%;width:100%">
                </el-popover>
               </el-carousel-item>  
             </el-carousel>
@@ -53,22 +53,10 @@
 
 
      <el-form-item label="处理人" prop="orgname">
-        <el-popover
-          ref="menuListPopover"
-          placement="bottom-start"
-          trigger="click">
-          <el-tree
-            :data="orgList"
-            :props="orgListTreeProps"
-            node-key="userid"
-            ref="menuListTree"
-            @current-change="menuListTreeCurrentChangeHandle"
-            :default-expand-all="true"
-            :highlight-current="true"
-            :expand-on-click-node="false">
-          </el-tree>
-        </el-popover>
-        <el-input v-model="dataForm.orgname" v-popover:menuListPopover :readonly="true" placeholder="点击选择处理人" class="menu-list__input"></el-input>
+       <select name="public-choice" v-model="assignerSelected" @change="getCouponSelected">       
+          <option value="" selected>请选择处理人</option>                                         
+          <option :value="ass.userid" v-for="ass in assList" :key="ass.userid" >{{ass.username}}</option>                                    
+       </select>
       </el-form-item> 
 
       <el-form-item label="上报人" prop="creuser">
@@ -110,19 +98,14 @@
       </el-form-item>
 
       <el-form-item label="图片" prop="picList">
-        <el-upload
-          class="upload-demo"
-          ref="upload"
-          :multiple="true"
-          accept="image/jpeg,image/jpg,image/png"
-          :on-preview="handlePreview"
-          :file-list="dataForm.picList"
-          list-type="picture-card">
-          <i class="el-icon-plus" ></i>
-        </el-upload>
-        <el-dialog :visible.sync="dialogVisible" top="10vh" append-to-body="">
-          <img width="80%" :src="dialogImageUrl" alt="">
-        </el-dialog>
+              <el-carousel indicator-position="outside" height="350px"> 
+              <el-carousel-item v-for="item in dataForm.picList" :key="item.id">
+                <el-popover placement="right" title="" trigger="hover">
+                <img  :src="item.url" style="height:50%;width:350px"/>
+                <img  slot="reference" :src="item.url" :alt="item.url"  style="height:100%;width:100%">
+               </el-popover>
+              </el-carousel-item>  
+            </el-carousel>
       </el-form-item>
 
       <el-form-item label="描述:" prop="desc">
@@ -137,26 +120,9 @@
 
 
       <el-form-item label="处理人" prop="assigner">
-        
+        <el-input v-model="dataForm.assigner" disabled ></el-input>
       </el-form-item>
-      <!-- <el-form-item label="处理人" prop="orgname">
-        <el-popover
-          ref="menuListPopover"
-          placement="bottom-start"
-          trigger="click">
-          <el-tree
-            :data="orgList"
-            :props="orgListTreeProps"
-            node-key="userid"
-            ref="menuListTree"
-            @current-change="menuListTreeCurrentChangeHandle"
-            :default-expand-all="true"
-            :highlight-current="true"
-            :expand-on-click-node="false">
-          </el-tree>
-        </el-popover>
-        <el-input v-model="dataForm.orgname" v-popover:menuListPopover :readonly="true" placeholder="点击选择处理人" class="menu-list__input"></el-input>
-      </el-form-item> -->
+
 
       <el-form-item label="上报人" prop="creuser">
         <el-input v-model="dataForm.creuser" placeholder="" disabled></el-input>
@@ -197,6 +163,8 @@
         dialogVisible: false,
         dialogImageUrl :'',
         num: 0,
+        assignerSelected:'',
+        assigner: '',
         successNum: 0,
         dataForm: {
           id: 0,
@@ -213,6 +181,7 @@
           types: null,
           assigner: ''
         },
+        assList: [],
         savePicList: [],
         pList: [],
         orgList: [],
@@ -246,9 +215,11 @@
       'showtype'
     ],
     methods: {
-      init (id) {
+      init (id,assigner) {
+        
         this.url = this.$http.adornUrl('/sys/task/upload')
         this.dataForm.id = id || 0
+        this.assigner = assigner
         this.$http({
                 url: this.$http.adornUrl('/sys/org/selectByTask'),
                 method: 'get',
@@ -258,11 +229,21 @@
             }).then(() => {
                 this.visible = true
                 this.$nextTick(() => {
-                  if (this.dataForm.id) {
-                    this.menuListTreeSetCurrentNode()
-                  }
               })
-            }).then(() => {
+            }).then(()=>{
+              this.$http({
+                    url: this.$http.adornUrl(`/sys/org/getOrgUser`),
+                    method: 'post',
+                    data: this.$http.adornData({"assigner":this.assigner})
+                }).then(({data}) => {
+                  if (data && data.code === 0) {
+                      console.log(JSON.stringify(data))
+                      console.log(JSON.stringify(this.assList))
+                      this.assList= data.userList
+                  }
+                })
+          }).then(() => {
+             this.assignerSelected = this.assList[0].userid;
             if(this.dataForm.id){
                 this.$http({
                     url: this.$http.adornUrl(`/sys/task/info`),
@@ -283,7 +264,7 @@
                     this.dataForm.types = data.task.sysTaskEntity.types
                     this.dataForm.orgname = data.task.sysTaskEntity.orgname
                     this.savePicList = data.task.picList
-                    this.menuListTreeSetCurrentNode()
+                    //this.menuListTreeSetCurrentNode()
                     let arr = []
                     data.task.picList.forEach(element => {
                         arr.push({"name":element.id,"url":element.path})
@@ -295,7 +276,7 @@
               this.dataForm.creuser = this.userName
               this.dataForm.cremobile = this.userMobile
             }
-          }) 
+          })
       },
       // 表单提交
       dataFormSubmit () {
@@ -329,16 +310,19 @@
               }
           })
       },
-      // 菜单树选中
-      menuListTreeCurrentChangeHandle (data, node) {
-        this.dataForm.assigner = data.userid
-        this.dataForm.orgname = data.name
+      getCouponSelected(){
+           console.log(this.assignerSelected)
       },
-      //菜单树设置当前选中节点
-      menuListTreeSetCurrentNode () {
-        this.$refs.menuListTree.setCurrentKey(this.dataForm.assigner)
-        this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['name']
-      },
+      // // 菜单树选中
+      // menuListTreeCurrentChangeHandle (data, node) {
+      //   this.dataForm.assigner = data.userid
+      //   this.dataForm.orgname = data.name
+      // },
+      // //菜单树设置当前选中节点
+      // menuListTreeSetCurrentNode () {
+      //   this.$refs.menuListTree.setCurrentKey(this.dataForm.assigner)
+      //   this.dataForm.orgname = (this.$refs.menuListTree.getCurrentNode() || {})['name']
+      // },
       handlePreview(file) {
         this.dialogImageUrl = file.path;
         this.dialogVisible = true;

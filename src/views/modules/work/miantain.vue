@@ -126,8 +126,8 @@
         width="150"
         label="操作">
         <template slot-scope="scope">
-          <el-button type="text" size="small"  @click="look(scope.row.id)">查看</el-button>
-          <el-button v-if="scope.row.status === 0 || scope.row.status === 1"  type="text" size="small" @click="addOrUpdateHandle(scope.row.id)">分配</el-button>
+          <el-button type="text" size="small"  @click="look(scope.row.id,scope.row.assigner)">查看</el-button>
+          <el-button v-if="scope.row.status === 0 || scope.row.status === 1"  type="text" size="small" @click="addOrUpdateHandle(scope.row.id,scope.row.assigner)">分配</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -232,19 +232,19 @@
         this.getDataList()
       },
       // 新增 / 修改
-      addOrUpdateHandle (id) {
+      addOrUpdateHandle (id,assigner) {
         this.showtype = 'add'
         this.addOrUpdateVisible = true
         this.$nextTick(() => {
-          this.$refs.addOrUpdate.init(id)
+          this.$refs.addOrUpdate.init(id,assigner)
         })
       },
       // 新增 / 修改
-      look (id) {
+      look (id,assigner) {
         this.showtype= 'look'
         this.addOrUpdateVisible = true
         this.$nextTick(() => {
-          this.$refs.addOrUpdate.init(id)
+          this.$refs.addOrUpdate.init(id,assigner)
         })
       },
       // 删除
